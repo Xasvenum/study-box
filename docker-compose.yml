@@ -1,0 +1,61 @@
+version: '3'
+services:
+  #PHP service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: PHP8.1
+    container_name: app
+    restart: unless-stopped
+    working_dir: /var/www
+networks:
+  - app-networks
+
+  #MySQL service
+db:
+    image: mysql:8.1
+    volumes:
+      - ./mysql:/var/lib/mysql
+    container_name: db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      SERVICE_TAGS: dev
+      SERVICE_NANE: mysql
+      MYSQL_ROOT_PASSWORD: P@$$w0rd
+networks:
+  - app-networks
+      
+  #Nodejs service
+node:
+    build:
+        context: ./backend
+        dockerfile: ./docker/nodejs/Dockerfile
+    ports:
+      - "5173:5173"
+    working_dir: /var/www
+    volumes:
+      #- /:var/www ??? # Mount local foledr how /var/www
+
+  #Nginx Service
+webserver:
+    image: Nginx:alpine
+    container_name: webserver
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./backend:/var/www
+      - ./nginx/conf.d:/etc/nginx/conf.d
+networks:
+  - app-networks
+
+  #Docker networks
+networks:
+  app-networks:
+    driver: bridge
+      
+
